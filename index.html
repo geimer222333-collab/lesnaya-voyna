@@ -1,30 +1,115 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Лесная война</title>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#101812">
+<title>Лесная война — мобильный FPS</title>
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#182329;color:#fff;font-family:system-ui,Arial,sans-serif;touch-action:none}canvas{display:block;width:100%;height:100%;touch-action:none}#hud{position:fixed;inset:0;pointer-events:none;z-index:5}.glass{background:#07151dbb;border:1px solid #ffffff70;border-radius:13px;padding:8px 11px;backdrop-filter:blur(7px);font-size:12px;text-shadow:0 1px 3px #000}#top{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}button{pointer-events:auto;color:#fff;background:#10252ddd;border:1px solid #ffffff90;border-radius:13px;padding:10px 13px;font-weight:800;font-size:13px;touch-action:manipulation}#stickBase{position:absolute;left:max(16px,env(safe-area-inset-left));bottom:max(18px,env(safe-area-inset-bottom));width:122px;height:122px;border-radius:50%;border:2px solid #ffffff80;background:#0b192b55;pointer-events:auto;touch-action:none}#stick{position:absolute;left:33px;top:33px;width:52px;height:52px;border-radius:50%;background:#e5f2e8c9;border:2px solid white;box-shadow:0 3px 12px #0008}#fire{position:absolute;right:max(22px,env(safe-area-inset-right));bottom:max(28px,env(safe-area-inset-bottom));width:82px;height:82px;border-radius:50%;background:linear-gradient(#ff8b48,#b72c1e);border:3px solid #ffe2b9;font-size:15px;box-shadow:0 4px 16px #0009}#aim{position:absolute;left:50%;top:50%;width:20px;height:20px;transform:translate(-50%,-50%);opacity:.9}#aim:before,#aim:after{content:"";position:absolute;background:white;box-shadow:0 0 3px #000}#aim:before{width:2px;height:20px;left:9px;top:0}#aim:after{height:2px;width:20px;top:9px;left:0}#hint{position:absolute;right:18px;bottom:120px;text-align:right;font-size:11px;opacity:.85;text-shadow:0 2px 3px #000;max-width:150px}#startScreen{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(130deg,#0d1a21ee,#233c2cdd)}#panel{max-width:500px;width:100%;text-align:center;background:#0a1824dc;border:1px solid #ffffff60;border-radius:20px;padding:22px;box-shadow:0 15px 45px #0008}h1{margin:0 0 10px;font-size:clamp(24px,5vw,40px)}p{line-height:1.45;color:#e2ece6;font-size:14px}#play{background:linear-gradient(#8ee05b,#347c2c);font-size:17px;padding:13px 25px;min-width:190px}#status{font-size:12px;opacity:.8;margin-top:12px}#rotate{display:none;position:fixed;inset:0;background:#071117;z-index:20;align-items:center;justify-content:center;text-align:center;padding:30px}@media (orientation:portrait) and (max-width:900px){#rotate{display:flex}#hud{visibility:hidden}}@media (max-height:430px){#stickBase{width:100px;height:100px;bottom:12px}#stick{left:26px;top:26px;width:44px;height:44px}#fire{width:68px;height:68px;bottom:14px}button{padding:7px 9px}}
-</style></head><body>
-<div id="rotate"><div style="font-size:20px">↻<br><b>Поверни телефон горизонтально</b><p>Игра рассчитана на альбомный режим.</p></div></div>
-<div id="hud"><div id="top"><div class="glass">🌲 ЛЕСНАЯ ВОЙНА · <span id="worldStatus">загрузка мира…</span></div><div style="display:flex;gap:6px"><button id="fullscreen">⛶ Экран</button><button id="reset">↺ Сброс</button></div></div><div id="aim"></div><div id="stickBase"><div id="stick"></div></div><button id="fire">🔫 ОГОНЬ</button><div id="hint">Свайпай справа,<br>чтобы осматриваться</div></div>
-<div id="startScreen"><div id="panel"><h1>ЛЕСНАЯ ВОЙНА</h1><p>Прогулка от первого лица по твоей 3D-карте. Двигайся джойстиком слева, осматривайся свайпом справа и нажимай «ОГОНЬ» для выстрела.</p><button id="play">ВОЙТИ В ЛЕС</button><div id="status">Загружаем модели леса и пистолета…</div></div></div>
-<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101812;color:#fff;font-family:system-ui,-apple-system,Arial;touch-action:none}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block}
+#hud{position:fixed;inset:0;pointer-events:none}
+#top{position:absolute;top:env(safe-area-inset-top,8px);left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;text-shadow:0 2px 4px #000}
+.pill{background:#101820b8;border:1px solid #ffffff35;border-radius:12px;padding:8px 12px;font-weight:700}
+#hint{position:absolute;top:55px;left:50%;transform:translateX(-50%);background:#101820a8;border-radius:12px;padding:8px 12px;font-size:12px;white-space:nowrap;text-align:center}
+#crosshair{position:absolute;left:50%;top:50%;width:20px;height:20px;transform:translate(-50%,-50%);opacity:.9}
+#crosshair:before,#crosshair:after{content:"";position:absolute;background:white;box-shadow:0 0 3px #000}
+#crosshair:before{width:2px;height:20px;left:9px}#crosshair:after{height:2px;width:20px;top:9px}
+#joystick{pointer-events:auto;position:absolute;left:22px;bottom:calc(24px + env(safe-area-inset-bottom,0px));width:132px;height:132px;border-radius:50%;background:#d9f1df2c;border:2px solid #ffffff66;touch-action:none}
+#stick{position:absolute;width:54px;height:54px;left:37px;top:37px;border-radius:50%;background:#eafff0a8;border:2px solid #fff;box-shadow:0 3px 10px #0006}
+#fire{pointer-events:auto;position:absolute;right:24px;bottom:calc(35px + env(safe-area-inset-bottom,0px));width:94px;height:94px;border-radius:50%;border:3px solid #fff;background:linear-gradient(#ff754c,#bd251e);font-size:17px;font-weight:900;color:#fff;box-shadow:0 5px 0 #6d1717;touch-action:none}
+#fire:active{transform:scale(.94)}
+#run{pointer-events:auto;position:absolute;right:32px;bottom:calc(145px + env(safe-area-inset-bottom,0px));border:1px solid #ffffff80;border-radius:14px;padding:10px 13px;background:#14271dc9;color:white;font-weight:700}
+#start{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:linear-gradient(#0b1715a8,#0b1715d9);padding:24px;text-align:center}
+#card{max-width:440px;width:100%;border:1px solid #ffffff40;background:#17251ff0;border-radius:24px;padding:25px;box-shadow:0 20px 70px #0008}
+h1{margin:0 0 8px;font-size:clamp(27px,7vw,42px)}#card p{line-height:1.5;color:#d6e3d9}
+#play{pointer-events:auto;width:100%;border:0;border-radius:15px;padding:16px;background:#d8f45e;color:#18240d;font-weight:900;font-size:19px;margin-top:10px}
+#status{font-size:12px;color:#b6c9ba;min-height:18px}
+#rotate{display:none;position:fixed;z-index:4;inset:0;background:#101812;color:white;align-items:center;justify-content:center;text-align:center;padding:25px}
+@media (orientation:portrait){#rotate{display:flex}}
+@media (orientation:landscape){#rotate{display:none}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="rotate">↻<br><br>Поверни телефон горизонтально<br><small>Игра лучше работает в альбомном режиме</small></div>
+<div id="hud">
+ <div id="top"><div class="pill">🌲 ЛЕСНАЯ ВОЙНА</div><div class="pill">❤ <span id="health">100</span></div></div>
+ <div id="hint">Двигай левый стик · веди пальцем по экрану для обзора</div>
+ <div id="crosshair"></div>
+ <div id="joystick"><div id="stick"></div></div>
+ <button id="run">БЕГ: ВЫКЛ</button>
+ <button id="fire">СТРЕЛЯТЬ</button>
+</div>
+<div id="start"><div id="card"><h1>ЛЕСНАЯ ВОЙНА</h1><p>Мобильный 3D-шутер от первого лица.<br>Поверни телефон горизонтально, нажми «Начать» и разреши полноэкранный режим, если браузер предложит.</p><p id="status">Подготовка леса и оружия…</p><button id="play">НАЧАТЬ ИГРУ</button><p style="font-size:12px">Управление: левый стик — движение, правая часть экрана — обзор, кнопка — выстрел.</p></div></div>
 <script type="module">
-import * as THREE from 'three';import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-const $=s=>document.querySelector(s),status=$('#status'),worldStatus=$('#worldStatus');
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bbec9);scene.fog=new THREE.Fog(0x9bbec9,90,450);
-const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,1500);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;document.body.insertBefore(renderer.domElement,$('#hud'));
-scene.add(new THREE.HemisphereLight(0xe2f3ff,0x394a30,2));const sun=new THREE.DirectionalLight(0xffe5b6,2);sun.position.set(70,120,40);scene.add(sun);
-const loader=new GLTFLoader();let world=null,gun=null,started=false,shots=0,bounds=150;const player={x:0,z:0,yaw:0,pitch:-.06};
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(800,800),new THREE.MeshStandardMaterial({color:0x536d43,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.08;scene.add(ground);
-loader.load('./assets/landscape_forest__mountains.glb',g=>{world=g.scene;scene.add(world);let box=new THREE.Box3().setFromObject(world),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());world.position.sub(center);box.setFromObject(world);size=box.getSize(new THREE.Vector3());bounds=Math.max(25,Math.min(500,Math.max(size.x,size.z)*.43));worldStatus.textContent='лес загружен';status.textContent='Лес загружен. Нажми «Войти в лес».'},undefined,err=>{console.error(err);worldStatus.textContent='ошибка леса';status.textContent='Не удалось загрузить модель леса. Проверь папку assets.'});
-const gunPivot=new THREE.Group();camera.add(gunPivot);scene.add(camera);
-loader.load('./assets/beretta_pmx_pmxs_sportiva_nero.glb',g=>{gun=g.scene;gunPivot.add(gun);const box=new THREE.Box3().setFromObject(gun),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());gun.position.sub(center);const maxDim=Math.max(size.x,size.y,size.z)||1;gun.scale.setScalar(.48/maxDim);gun.rotation.set(0,Math.PI,0);gun.position.set(0,0,0);gunPivot.position.set(.34,-.28,-.68);gunPivot.rotation.set(-.05,-.12,0);status.textContent='Пистолет загружен. Нажми «Войти в лес».'},undefined,err=>{console.error(err);status.textContent='Пистолет не загрузился. Проверь файл в папке assets.'});
-let joy={x:0,y:0},joyId=null;const base=$('#stickBase'),knob=$('#stick');function setJoy(e){let r=base.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),max=r.width*.31,len=Math.hypot(dx,dy)||1,k=Math.min(1,max/len);joy.x=dx/max*k;joy.y=dy/max*k;knob.style.transform=`translate(${joy.x*max}px,${joy.y*max}px)`}
-base.addEventListener('pointerdown',e=>{joyId=e.pointerId;base.setPointerCapture(e.pointerId);setJoy(e)});base.addEventListener('pointermove',e=>{if(e.pointerId===joyId)setJoy(e)});function endJoy(e){if(e.pointerId===joyId){joyId=null;joy.x=joy.y=0;knob.style.transform='translate(0,0)'}}base.addEventListener('pointerup',endJoy);base.addEventListener('pointercancel',endJoy);
-let lookId=null,lastX=0,lastY=0;renderer.domElement.addEventListener('pointerdown',e=>{if(started&&e.clientX>innerWidth*.35&&e.clientX<innerWidth-105){lookId=e.pointerId;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)}});renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;let dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;player.yaw-=dx*.004;player.pitch=THREE.MathUtils.clamp(player.pitch-dy*.003,-1.05,.55)});function endLook(e){if(e.pointerId===lookId)lookId=null}renderer.domElement.addEventListener('pointerup',endLook);renderer.domElement.addEventListener('pointercancel',endLook);
-let recoil=0;const muzzle=new THREE.Mesh(new THREE.SphereGeometry(.055,8,8),new THREE.MeshBasicMaterial({color:0xffc34d}));muzzle.visible=false;gunPivot.add(muzzle);muzzle.position.set(0,.005,-.72);
-function fire(){if(!started)return;shots++;recoil=.12;muzzle.visible=true;setTimeout(()=>muzzle.visible=false,65);worldStatus.textContent='выстрелов: '+shots}$('#fire').addEventListener('pointerdown',e=>{e.preventDefault();fire()});
-function begin(){started=true;$('#startScreen').style.display='none';try{screen.orientation?.lock?.('landscape').catch(()=>{})}catch{}}
-$('#play').addEventListener('click',async()=>{try{await document.documentElement.requestFullscreen?.()}catch{}try{await screen.orientation?.lock?.('landscape')}catch{}begin()});$('#fullscreen').addEventListener('click',async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen?.();else await document.exitFullscreen?.()}catch{}try{await screen.orientation?.lock?.('landscape')}catch{}});$('#reset').addEventListener('click',()=>{player.x=player.z=0;player.yaw=0;player.pitch=-.06;shots=0;worldStatus.textContent=world?'лес загружен':'загрузка мира…'});
-const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(started){const speed=10,forward=-joy.y*speed*dt,side=joy.x*speed*dt;player.x+=Math.sin(player.yaw)*forward+Math.cos(player.yaw)*side;player.z+=Math.cos(player.yaw)*forward-Math.sin(player.yaw)*side;player.x=THREE.MathUtils.clamp(player.x,-bounds,bounds);player.z=THREE.MathUtils.clamp(player.z,-bounds,bounds);camera.position.set(player.x,1.7,player.z);camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;if(recoil>0){recoil=Math.max(0,recoil-dt*.8);gunPivot.position.z=-.68+recoil*.7;gunPivot.rotation.x=-.05-recoil*1.8}else{gunPivot.position.z=-.68;gunPivot.rotation.x=-.05}}renderer.render(scene,camera)}function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)}addEventListener('resize',resize);animate();
-</script></body></html>
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+const canvas=document.querySelector('#game'), statusEl=document.querySelector('#status');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bb8bd);scene.fog=new THREE.Fog(0x9bb8bd,35,150);
+const camera=new THREE.PerspectiveCamera(76,innerWidth/innerHeight,.08,400);
+camera.rotation.order='YXZ';scene.add(camera);
+scene.add(new THREE.HemisphereLight(0xe4f4ff,0x34442a,2));
+const sun=new THREE.DirectionalLight(0xffedc7,2.6);sun.position.set(-35,65,25);scene.add(sun);
+const loader=new GLTFLoader();
+const mat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness});
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mat(0x526e43));ground.rotation.x=-Math.PI/2;ground.position.y=-.04;scene.add(ground);
+// Forest fallback: a walkable clearing with procedural trees and rocks.
+const treeGroup=new THREE.Group();scene.add(treeGroup);
+function tree(x,z,s=1){const g=new THREE.Group();const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18*s,.28*s,2.5*s,7),mat(0x60432d));trunk.position.y=1.25*s;g.add(trunk);
+ for(let i=0;i<3;i++){const crown=new THREE.Mesh(new THREE.ConeGeometry((1.25-i*.19)*s,(2.2-i*.12)*s,7),mat([0x315b35,0x3c713e,0x487b42][i]));crown.position.y=(2.2+i*.85)*s;g.add(crown)}g.position.set(x,0,z);treeGroup.add(g)}
+for(let i=0;i<115;i++){const a=Math.random()*Math.PI*2,r=13+Math.random()*85;tree(Math.cos(a)*r,Math.sin(a)*r,.65+Math.random()*.9)}
+for(let i=0;i<40;i++){const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.35+Math.random()*.7,0),mat(0x77796b));rock.position.set((Math.random()-.5)*25,.3,(Math.random()-.5)*25);rock.scale.y=.55;scene.add(rock)}
+// Load the uploaded forest model from the repository root. If it fails, the procedural forest remains.
+let forestLoaded=false;
+loader.load('./landscape_forest__mountains.glb',g=>{g.scene.scale.setScalar(1);g.scene.position.set(0,0,0);scene.add(g.scene);forestLoaded=true;statusEl.textContent='Лес загружен';},undefined,e=>console.warn('Не удалось загрузить модель леса:',e));
+// Weapon model attached to camera; fallback pistol made from simple meshes.
+const weapon=new THREE.Group();camera.add(weapon);weapon.position.set(.32,-.28,-.62);weapon.rotation.set(0,Math.PI,0);
+function makeFallbackGun(){const dark=mat(0x20252a,.45),metal=mat(0x454c50,.35),grip=mat(0x171b1e);const slide=new THREE.Mesh(new THREE.BoxGeometry(.15,.13,.55),metal);slide.position.set(0,.04,-.12);weapon.add(slide);const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.35,10),dark);barrel.rotation.x=Math.PI/2;barrel.position.set(0,.04,-.5);weapon.add(barrel);const handle=new THREE.Mesh(new THREE.BoxGeometry(.12,.26,.15),grip);handle.position.set(0,-.12,.03);handle.rotation.x=-.18;weapon.add(handle);const sight=new THREE.Mesh(new THREE.BoxGeometry(.04,.04,.08),dark);sight.position.set(0,.13,-.16);weapon.add(sight)}
+makeFallbackGun();
+loader.load('./beretta_pmx_pmxs_sportiva_nero.glb',g=>{const model=g.scene;model.scale.setScalar(.22);model.position.set(0,-.10,-.25);model.rotation.y=Math.PI;weapon.add(model);statusEl.textContent='Пистолет загружен';},undefined,e=>console.warn('Не удалось загрузить модель оружия:',e));
+let yaw=0,pitch=0,health=100,started=false,run=false,fireUntil=0,lastShot=0;
+const keys={forward:0,side:0};let moving=false;
+const player={x:0,y:1.65,z:6,vy:0};
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7))}
+addEventListener('resize',resize);
+async function enterGame(){started=true;document.querySelector('#start').style.display='none';try{if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();}catch(e){}try{if(screen.orientation&&screen.orientation.lock)await screen.orientation.lock('landscape');}catch(e){}}
+document.querySelector('#play').addEventListener('click',enterGame);
+document.querySelector('#run').addEventListener('click',()=>{run=!run;document.querySelector('#run').textContent='БЕГ: '+(run?'ВКЛ':'ВЫКЛ')});
+// Virtual joystick
+const joy=document.querySelector('#joystick'),stick=document.querySelector('#stick');let joyId=null,joyCenter={x:0,y:0};
+function joyStart(e){e.preventDefault();joyId=e.pointerId;joy.setPointerCapture(joyId);const r=joy.getBoundingClientRect();joyCenter={x:r.left+r.width/2,y:r.top+r.height/2};joyMove(e)}
+function joyMove(e){if(joyId!==e.pointerId)return;let dx=e.clientX-joyCenter.x,dy=e.clientY-joyCenter.y;const max=42,len=Math.hypot(dx,dy)||1;if(len>max){dx=dx/len*max;dy=dy/len*max}stick.style.transform=`translate(${dx}px,${dy}px)`;keys.side=dx/max;keys.forward=-dy/max}
+function joyEnd(e){if(joyId!==e.pointerId)return;joyId=null;keys.side=keys.forward=0;stick.style.transform='translate(0,0)'}
+joy.addEventListener('pointerdown',joyStart);joy.addEventListener('pointermove',joyMove);joy.addEventListener('pointerup',joyEnd);joy.addEventListener('pointercancel',joyEnd);
+// Look with right-side touch or mouse drag
+let lookId=null,lastX=0,lastY=0;
+canvas.addEventListener('pointerdown',e=>{if(e.clientX<innerWidth*.35&&e.pointerType==='touch')return;lookId=e.pointerId;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(lookId)});
+canvas.addEventListener('pointermove',e=>{if(lookId!==e.pointerId||!started)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;yaw-=dx*.0042;pitch=clamp(pitch-dy*.0035,-1.25,1.25)});
+function endLook(e){if(lookId===e.pointerId)lookId=null}canvas.addEventListener('pointerup',endLook);canvas.addEventListener('pointercancel',endLook);
+function shoot(){if(!started)return;const now=performance.now();if(now-lastShot<190)return;lastShot=now;fireUntil=now+115;weapon.position.z=-.52;weapon.position.y=-.25;
+ // Tiny muzzle flash at the centre of the view
+ const flash=new THREE.Mesh(new THREE.SphereGeometry(.055,8,6),new THREE.MeshBasicMaterial({color:0xffd26a}));flash.position.set(0,-.04,-1.1);camera.add(flash);setTimeout(()=>{camera.remove(flash);flash.geometry.dispose();flash.material.dispose()},55);
+ // Raycast hit feedback against visible model meshes
+ const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(0,0),camera);const hits=ray.intersectObjects(scene.children,true);if(hits.length&&hits[0].distance<80){const obj=hits[0].object;const old=obj.material;if(old&&old.color){obj.material=old.clone();obj.material.color.set(0xffb64d);setTimeout(()=>{obj.material.dispose();obj.material=old},90)}}
+}
+document.querySelector('#fire').addEventListener('pointerdown',e=>{e.preventDefault();shoot()});
+addEventListener('keydown',e=>{if(e.code==='KeyW'||e.code==='ArrowUp')keys.forward=1;if(e.code==='KeyS'||e.code==='ArrowDown')keys.forward=-1;if(e.code==='KeyA'||e.code==='ArrowLeft')keys.side=-1;if(e.code==='KeyD'||e.code==='ArrowRight')keys.side=1;if(e.code==='Space')shoot()});
+addEventListener('keyup',e=>{if(['KeyW','ArrowUp','KeyS','ArrowDown'].includes(e.code))keys.forward=0;if(['KeyA','ArrowLeft','KeyD','ArrowRight'].includes(e.code))keys.side=0});
+let prev=performance.now();
+function animate(now){requestAnimationFrame(animate);const dt=Math.min((now-prev)/1000,.04);prev=now;
+ if(started){const speed=run?7.2:4.1;const f=keys.forward,s=keys.side;const dx=(Math.sin(yaw)*f+Math.cos(yaw)*s)*speed*dt,dz=(-Math.cos(yaw)*f+Math.sin(yaw)*s)*speed*dt;
+ player.x=clamp(player.x+dx,-95,95);player.z=clamp(player.z+dz,-95,95);
+ // Simple boundary trees act as a soft limit; camera follows the player.
+ camera.position.set(player.x,player.y,player.z);camera.rotation.set(pitch,yaw,0,'YXZ');
+ const recoil=now<fireUntil?Math.sin((now-(fireUntil-115))/115*Math.PI):0;weapon.position.x=.32;weapon.position.y=-.28+recoil*.07;weapon.position.z=-.62+recoil*.18;
+ document.querySelector('#health').textContent=health;
+ }
+ renderer.render(scene,camera)}
+camera.position.set(0,1.65,6);requestAnimationFrame(animate);
+</script>
+</body></html>
