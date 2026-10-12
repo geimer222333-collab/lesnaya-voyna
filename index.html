@@ -1,44 +1,54 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Лесная война</title>
+
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#17251b;color:white;font-family:Arial,sans-serif;touch-action:none}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#17251b;color:#fff;font-family:Arial,sans-serif;touch-action:none}
 #game{position:fixed;inset:0;width:100%;height:100%;display:block}
-#menu{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:#101812e8;padding:20px;text-align:center}
-#card{width:100%;max-width:420px;background:#203326;border:1px solid #ffffff55;border-radius:22px;padding:24px}
-h1{font-size:32px;margin:0 0 12px}
+#menu{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:#101812e8;padding:18px;text-align:center;overflow:auto}
+#card{width:100%;max-width:440px;background:#203326;border:1px solid #ffffff55;border-radius:22px;padding:22px}
+h1{font-size:clamp(25px,6vw,36px);margin:0 0 14px}
 p{line-height:1.5}
-button{cursor:pointer;border:0;border-radius:14px;padding:15px;font-size:18px;font-weight:bold}
+button{border:0;border-radius:15px;padding:14px;font-size:17px;font-weight:bold;touch-action:none}
 #play{width:100%;background:#d8f45e;color:#18240d}
-#status{font-size:13px;color:#ffe6a0;overflow-wrap:anywhere}
+#status{font-size:14px;color:#ffe6a0;overflow-wrap:anywhere}
 #hud{display:none;position:fixed;inset:0;pointer-events:none}
-#top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;font-weight:bold;text-shadow:0 2px 4px black}
+#top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;font-weight:bold;text-shadow:0 2px 4px #000}
 .pill{background:#101820bb;padding:10px;border-radius:12px}
-#stickbase{position:absolute;left:20px;bottom:22px;width:125px;height:125px;border-radius:50%;background:#ffffff44;border:2px solid #ffffff99;pointer-events:auto;touch-action:none}
+#stickbase{position:absolute;left:20px;bottom:22px;width:125px;height:125px;border-radius:50%;background:#ffffff44;border:2px solid #ffffff99;pointer-events:auto}
 #stick{position:absolute;left:35px;top:35px;width:52px;height:52px;border-radius:50%;background:#eafff0cc;border:2px solid white}
 #fire{position:absolute;right:20px;bottom:24px;width:92px;height:92px;border-radius:50%;background:#e85b37;color:white;border:3px solid white;pointer-events:auto}
 #run{position:absolute;right:28px;bottom:130px;padding:12px;background:#203326;color:white;pointer-events:auto}
-#aim{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:26px;text-shadow:0 1px 4px black}
+#aim{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:27px;text-shadow:0 1px 4px black}
 #rotate{display:none;position:fixed;inset:0;z-index:8;background:#101812;align-items:center;justify-content:center;text-align:center;padding:25px}
 @media(orientation:portrait){#rotate{display:flex}}
 @media(orientation:landscape){#rotate{display:none}}
 </style>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
 </head>
+
 <body>
 <canvas id="game"></canvas>
-
-<div id="rotate">Поверни телефон горизонтально, чтобы играть.</div>
+<div id="rotate">🌲 Поверни телефон горизонтально, чтобы играть.</div>
 
 <div id="menu">
   <div id="card">
     <h1>🌲 ЛЕСНАЯ ВОЙНА</h1>
-    <p>Мобильный шутер от первого лица.</p>
-    <p>Левый стик — движение. Правая часть экрана — обзор. Кнопка — стрельба.</p>
+    <p>Мобильный 3D-шутер от первого лица.</p>
+    <p>Левый стик — движение.<br>Правая часть экрана — обзор.<br>Кнопка — стрельба.</p>
     <p id="status">Игра готова к запуску.</p>
     <button id="play">НАЧАТЬ ИГРУ</button>
   </div>
@@ -55,217 +65,301 @@ button{cursor:pointer;border:0;border-radius:14px;padding:15px;font-size:18px;fo
   <button id="fire">СТРЕЛЯТЬ</button>
 </div>
 
-<script>
-const menu=document.getElementById('menu');
-const statusEl=document.getElementById('status');
-const play=document.getElementById('play');
-let gameStarted=false;
-let startGame=null;
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-play.addEventListener('click',async()=>{
-  statusEl.textContent='Запускаю 3D-движок…';
-  play.disabled=true;
-  try{
-    if(!startGame){
-      const module=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
-      const loaderModule=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
-      startGame=()=>initGame(module,loaderModule);
+const menu = document.getElementById('menu');
+const statusEl = document.getElementById('status');
+const play = document.getElementById('play');
+const hud = document.getElementById('hud');
+const canvas = document.getElementById('game');
+
+let started = false;
+let initialized = false;
+
+play.addEventListener('click', async () => {
+  if (started) return;
+  play.disabled = true;
+  statusEl.textContent = 'Запускаю 3D-игру…';
+
+  try {
+    if (!initialized) {
+      initGame();
+      initialized = true;
     }
-    startGame();
-    gameStarted=true;
-    menu.style.display='none';
-    document.getElementById('hud').style.display='block';
-    try{await document.documentElement.requestFullscreen()}catch(e){}
-    try{await screen.orientation.lock('landscape')}catch(e){}
-  }catch(e){
-    statusEl.textContent='Ошибка запуска: '+(e.message||e)+'. Проверь интернет и обнови страницу.';
-    play.disabled=false;
+    started = true;
+    menu.style.display = 'none';
+    hud.style.display = 'block';
+
+    try {
+      await document.documentElement.requestFullscreen();
+    } catch (e) {}
+    try {
+      await screen.orientation.lock('landscape');
+    } catch (e) {}
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = 'Ошибка запуска: ' + (e.message || e);
+    play.disabled = false;
   }
 });
 
-function initGame(THREE,GLTF){
-  if(window.forestGameReady)return;
-  window.forestGameReady=true;
+function initGame() {
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-  const canvas=document.getElementById('game');
-  const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
-  renderer.setSize(innerWidth,innerHeight);
-  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x9bb8bd);
+  scene.fog = new THREE.Fog(0x9bb8bd, 35, 150);
 
-  const scene=new THREE.Scene();
-  scene.background=new THREE.Color(0x9bb8bd);
-  scene.fog=new THREE.Fog(0x9bb8bd,30,150);
-
-  const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,400);
-  camera.rotation.order='YXZ';
+  const camera = new THREE.PerspectiveCamera(
+    75, innerWidth / innerHeight, 0.1, 400
+  );
+  camera.rotation.order = 'YXZ';
   scene.add(camera);
 
-  scene.add(new THREE.HemisphereLight(0xe4f4ff,0x34442a,2));
-  const sun=new THREE.DirectionalLight(0xffedc7,2.5);
-  sun.position.set(-35,65,25);
+  scene.add(new THREE.HemisphereLight(0xe4f4ff, 0x34442a, 2));
+
+  const sun = new THREE.DirectionalLight(0xffedc7, 2.5);
+  sun.position.set(-35, 65, 25);
   scene.add(sun);
 
-  const mat=(color)=>new THREE.MeshStandardMaterial({color});
-  const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mat(0x526e43));
-  ground.rotation.x=-Math.PI/2;
+  const material = color => new THREE.MeshStandardMaterial({color});
+
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(500, 500),
+    material(0x526e43)
+  );
+  ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
-  // Запасной лес из простых 3D-деревьев.
-  function tree(x,z,s){
-    const g=new THREE.Group();
-    const trunk=new THREE.Mesh(
-      new THREE.CylinderGeometry(.18*s,.25*s,2.4*s,7),
-      mat(0x60432d)
+  // Запасной лес из деревьев, если файл карты не загрузится.
+  function makeTree(x, z, scale) {
+    const group = new THREE.Group();
+
+    const trunk = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.18 * scale, 0.25 * scale, 2.4 * scale, 7),
+      material(0x60432d)
     );
-    trunk.position.y=1.2*s;
-    g.add(trunk);
-    for(let i=0;i<3;i++){
-      const crown=new THREE.Mesh(
-        new THREE.ConeGeometry((1.2-i*.2)*s,2*s,7),
-        mat([0x315b35,0x3c713e,0x487b42][i])
+    trunk.position.y = 1.2 * scale;
+    group.add(trunk);
+
+    for (let i = 0; i < 3; i++) {
+      const crown = new THREE.Mesh(
+        new THREE.ConeGeometry((1.2 - i * 0.2) * scale, 2 * scale, 7),
+        material([0x315b35, 0x3c713e, 0x487b42][i])
       );
-      crown.position.y=(2+i*.8)*s;
-      g.add(crown);
+      crown.position.y = (2 + i * 0.8) * scale;
+      group.add(crown);
     }
-    g.position.set(x,0,z);
-    scene.add(g);
+
+    group.position.set(x, 0, z);
+    scene.add(group);
   }
 
-  for(let i=0;i<110;i++){
-    const a=Math.random()*Math.PI*2;
-    const r=12+Math.random()*75;
-    tree(Math.cos(a)*r,Math.sin(a)*r,.7+Math.random()*.7);
+  for (let i = 0; i < 110; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 12 + Math.random() * 75;
+    makeTree(
+      Math.cos(angle) * radius,
+      Math.sin(angle) * radius,
+      0.7 + Math.random() * 0.7
+    );
   }
 
-  // Модель карты загружается дополнительно; лес останется и без неё.
-  const loader=new GLTF.GLTFLoader();
-  loader.load('./landscape_forest__mountains.glb',g=>{
-    g.scene.scale.setScalar(1);
-    g.scene.position.set(0,0,0);
-    scene.add(g.scene);
-  },undefined,()=>console.log('Используется запасной лес'));
+  const loader = new GLTFLoader();
 
-  // Оружие из простых фигур — появляется даже без файла модели.
-  const weapon=new THREE.Group();
+  // Карта. При ошибке остаётся запасной лес.
+  loader.load(
+    './landscape_forest__mountains.glb',
+    gltf => {
+      gltf.scene.scale.setScalar(1);
+      gltf.scene.position.set(0, 0, 0);
+      scene.add(gltf.scene);
+    },
+    undefined,
+    error => console.warn('Карта не загрузилась; используется запасной лес.', error)
+  );
+
+  // Простое оружие на случай, если модель оружия не загрузится.
+  const weapon = new THREE.Group();
   camera.add(weapon);
-  weapon.position.set(.32,-.28,-.65);
+  weapon.position.set(0.32, -0.28, -0.65);
 
-  const gun=new THREE.Mesh(
-    new THREE.BoxGeometry(.13,.14,.55),
-    mat(0x30363b)
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(0.13, 0.14, 0.55),
+    material(0x30363b)
   );
-  gun.position.set(0,0,-.12);
-  weapon.add(gun);
+  body.position.z = -0.12;
+  weapon.add(body);
 
-  const handle=new THREE.Mesh(
-    new THREE.BoxGeometry(.11,.24,.14),
-    mat(0x171b1e)
+  const handle = new THREE.Mesh(
+    new THREE.BoxGeometry(0.11, 0.24, 0.14),
+    material(0x171b1e)
   );
-  handle.position.set(0,-.15,.06);
+  handle.position.set(0, -0.15, 0.06);
   weapon.add(handle);
 
-  loader.load('./beretta_pmx_pmxs_sportiva_nero.glb',g=>{
-    const model=g.scene;
-    model.scale.setScalar(.22);
-    model.position.set(0,-.1,-.25);
-    weapon.add(model);
-  },undefined,()=>console.log('Используется запасное оружие'));
+  loader.load(
+    './beretta_pmx_pmxs_sportiva_nero.glb',
+    gltf => {
+      gltf.scene.scale.setScalar(0.22);
+      gltf.scene.position.set(0, -0.1, -0.25);
+      weapon.add(gltf.scene);
+    },
+    undefined,
+    error => console.warn('Модель оружия не загрузилась; используется запасная.', error)
+  );
 
-  let yaw=0,pitch=0;
-  const player={x:0,y:1.65,z:6};
-  const keys={forward:0,side:0};
-  let running=false,lastShot=0,recoil=0;
+  const player = {x: 0, y: 1.65, z: 6};
+  const movement = {forward: 0, side: 0};
+  let yaw = 0;
+  let pitch = 0;
+  let running = false;
+  let recoilUntil = 0;
+  let lastShot = 0;
 
-  function resize(){
-    camera.aspect=innerWidth/innerHeight;
+  function resize() {
+    camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth,innerHeight);
+    renderer.setSize(innerWidth, innerHeight);
   }
-  addEventListener('resize',resize);
+  window.addEventListener('resize', resize);
 
-  const base=document.getElementById('stickbase');
-  const stick=document.getElementById('stick');
-  let joyId=null,cx=0,cy=0;
+  // Левый виртуальный джойстик.
+  const base = document.getElementById('stickbase');
+  const stick = document.getElementById('stick');
+  let joyId = null;
+  let centerX = 0;
+  let centerY = 0;
 
-  base.addEventListener('pointerdown',e=>{
+  base.addEventListener('pointerdown', e => {
     e.preventDefault();
-    joyId=e.pointerId;
+    joyId = e.pointerId;
     base.setPointerCapture(joyId);
-    const r=base.getBoundingClientRect();
-    cx=r.left+r.width/2;
-    cy=r.top+r.height/2;
+
+    const rect = base.getBoundingClientRect();
+    centerX = rect.left + rect.width / 2;
+    centerY = rect.top + rect.height / 2;
     moveJoy(e);
   });
-  function moveJoy(e){
-    if(e.pointerId!==joyId)return;
-    let dx=e.clientX-cx,dy=e.clientY-cy;
-    const max=38,len=Math.hypot(dx,dy)||1;
-    if(len>max){dx=dx/len*max;dy=dy/len*max}
-    stick.style.transform=`translate(${dx}px,${dy}px)`;
-    keys.side=dx/max;
-    keys.forward=-dy/max;
-  }
-  base.addEventListener('pointermove',moveJoy);
-  function endJoy(e){
-    if(e.pointerId!==joyId)return;
-    joyId=null;keys.side=keys.forward=0;
-    stick.style.transform='translate(0,0)';
-  }
-  base.addEventListener('pointerup',endJoy);
-  base.addEventListener('pointercancel',endJoy);
 
-  let lookId=null,lastX=0,lastY=0;
-  canvas.addEventListener('pointerdown',e=>{
-    if(e.clientX<innerWidth*.35)return;
-    lookId=e.pointerId;lastX=e.clientX;lastY=e.clientY;
-    canvas.setPointerCapture(lookId);
-  });
-  canvas.addEventListener('pointermove',e=>{
-    if(e.pointerId!==lookId)return;
-    yaw-=(e.clientX-lastX)*.004;
-    pitch=Math.max(-1.2,Math.min(1.2,pitch-(e.clientY-lastY)*.003));
-    lastX=e.clientX;lastY=e.clientY;
-  });
-  function endLook(e){if(e.pointerId===lookId)lookId=null}
-  canvas.addEventListener('pointerup',endLook);
-  canvas.addEventListener('pointercancel',endLook);
+  function moveJoy(e) {
+    if (e.pointerId !== joyId) return;
 
-  document.getElementById('run').onclick=()=>{
-    running=!running;
-    document.getElementById('run').textContent='БЕГ: '+(running?'ВКЛ':'ВЫКЛ');
-  };
+    let dx = e.clientX - centerX;
+    let dy = e.clientY - centerY;
+    const max = 38;
+    const length = Math.hypot(dx, dy) || 1;
 
-  document.getElementById('fire').addEventListener('pointerdown',e=>{
-    e.preventDefault();
-    const now=performance.now();
-    if(now-lastShot<200)return;
-    lastShot=now;
-    recoil=now+120;
-  });
-
-  let previous=performance.now();
-  function animate(now){
-    requestAnimationFrame(animate);
-    const dt=Math.min((now-previous)/1000,.04);
-    previous=now;
-
-    if(gameStarted){
-      const speed=running?7:4;
-      player.x+= (Math.sin(yaw)*keys.forward+Math.cos(yaw)*keys.side)*speed*dt;
-      player.z+= (-Math.cos(yaw)*keys.forward+Math.sin(yaw)*keys.side)*speed*dt;
-      player.x=Math.max(-90,Math.min(90,player.x));
-      player.z=Math.max(-90,Math.min(90,player.z));
-      camera.position.set(player.x,player.y,player.z);
-      camera.rotation.set(pitch,yaw,0,'YXZ');
-      const kick=now<recoil?.08:0;
-      weapon.position.z=-.65+kick;
-      weapon.position.y=-.28+kick*.4;
+    if (length > max) {
+      dx = dx / length * max;
+      dy = dy / length * max;
     }
 
-    renderer.render(scene,camera);
+    stick.style.transform = `translate(${dx}px, ${dy}px)`;
+    movement.side = dx / max;
+    movement.forward = -dy / max;
   }
-  camera.position.set(0,1.65,6);
+
+  function endJoy(e) {
+    if (e.pointerId !== joyId) return;
+    joyId = null;
+    movement.side = 0;
+    movement.forward = 0;
+    stick.style.transform = 'translate(0,0)';
+  }
+
+  base.addEventListener('pointermove', moveJoy);
+  base.addEventListener('pointerup', endJoy);
+  base.addEventListener('pointercancel', endJoy);
+
+  // Обзор свайпом по правой стороне экрана.
+  let lookId = null;
+  let lastX = 0;
+  let lastY = 0;
+
+  canvas.addEventListener('pointerdown', e => {
+    if (e.clientX < innerWidth * 0.35) return;
+    lookId = e.pointerId;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    canvas.setPointerCapture(lookId);
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerId !== lookId) return;
+
+    yaw -= (e.clientX - lastX) * 0.004;
+    pitch -= (e.clientY - lastY) * 0.003;
+    pitch = Math.max(-1.2, Math.min(1.2, pitch));
+
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+
+  function endLook(e) {
+    if (e.pointerId === lookId) lookId = null;
+  }
+  canvas.addEventListener('pointerup', endLook);
+  canvas.addEventListener('pointercancel', endLook);
+
+  document.getElementById('run').addEventListener('click', () => {
+    running = !running;
+    document.getElementById('run').textContent =
+      'БЕГ: ' + (running ? 'ВКЛ' : 'ВЫКЛ');
+  });
+
+  document.getElementById('fire').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const now = performance.now();
+    if (now - lastShot < 200) return;
+    lastShot = now;
+    recoilUntil = now + 120;
+  });
+
+  let previous = performance.now();
+
+  function animate(now) {
+    requestAnimationFrame(animate);
+
+    const dt = Math.min((now - previous) / 1000, 0.04);
+    previous = now;
+
+    if (started) {
+      const speed = running ? 7 : 4;
+
+      player.x += (
+        Math.sin(yaw) * movement.forward +
+        Math.cos(yaw) * movement.side
+      ) * speed * dt;
+
+      player.z += (
+        -Math.cos(yaw) * movement.forward +
+        Math.sin(yaw) * movement.side
+      ) * speed * dt;
+
+      player.x = Math.max(-90, Math.min(90, player.x));
+      player.z = Math.max(-90, Math.min(90, player.z));
+
+      camera.position.set(player.x, player.y, player.z);
+      camera.rotation.set(pitch, yaw, 0, 'YXZ');
+
+      const kick = now < recoilUntil ? 0.08 : 0;
+      weapon.position.z = -0.65 + kick;
+      weapon.position.y = -0.28 + kick * 0.4;
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  camera.position.set(0, 1.65, 6);
   requestAnimationFrame(animate);
 }
 </script>
