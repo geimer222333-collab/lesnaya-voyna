@@ -1,115 +1,273 @@
+
 <!doctype html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#101812">
-<title>Лесная война — мобильный FPS</title>
+<title>Лесная война</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101812;color:#fff;font-family:system-ui,-apple-system,Arial;touch-action:none}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#17251b;color:white;font-family:Arial,sans-serif;touch-action:none}
 #game{position:fixed;inset:0;width:100%;height:100%;display:block}
-#hud{position:fixed;inset:0;pointer-events:none}
-#top{position:absolute;top:env(safe-area-inset-top,8px);left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;text-shadow:0 2px 4px #000}
-.pill{background:#101820b8;border:1px solid #ffffff35;border-radius:12px;padding:8px 12px;font-weight:700}
-#hint{position:absolute;top:55px;left:50%;transform:translateX(-50%);background:#101820a8;border-radius:12px;padding:8px 12px;font-size:12px;white-space:nowrap;text-align:center}
-#crosshair{position:absolute;left:50%;top:50%;width:20px;height:20px;transform:translate(-50%,-50%);opacity:.9}
-#crosshair:before,#crosshair:after{content:"";position:absolute;background:white;box-shadow:0 0 3px #000}
-#crosshair:before{width:2px;height:20px;left:9px}#crosshair:after{height:2px;width:20px;top:9px}
-#joystick{pointer-events:auto;position:absolute;left:22px;bottom:calc(24px + env(safe-area-inset-bottom,0px));width:132px;height:132px;border-radius:50%;background:#d9f1df2c;border:2px solid #ffffff66;touch-action:none}
-#stick{position:absolute;width:54px;height:54px;left:37px;top:37px;border-radius:50%;background:#eafff0a8;border:2px solid #fff;box-shadow:0 3px 10px #0006}
-#fire{pointer-events:auto;position:absolute;right:24px;bottom:calc(35px + env(safe-area-inset-bottom,0px));width:94px;height:94px;border-radius:50%;border:3px solid #fff;background:linear-gradient(#ff754c,#bd251e);font-size:17px;font-weight:900;color:#fff;box-shadow:0 5px 0 #6d1717;touch-action:none}
-#fire:active{transform:scale(.94)}
-#run{pointer-events:auto;position:absolute;right:32px;bottom:calc(145px + env(safe-area-inset-bottom,0px));border:1px solid #ffffff80;border-radius:14px;padding:10px 13px;background:#14271dc9;color:white;font-weight:700}
-#start{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:linear-gradient(#0b1715a8,#0b1715d9);padding:24px;text-align:center}
-#card{max-width:440px;width:100%;border:1px solid #ffffff40;background:#17251ff0;border-radius:24px;padding:25px;box-shadow:0 20px 70px #0008}
-h1{margin:0 0 8px;font-size:clamp(27px,7vw,42px)}#card p{line-height:1.5;color:#d6e3d9}
-#play{pointer-events:auto;width:100%;border:0;border-radius:15px;padding:16px;background:#d8f45e;color:#18240d;font-weight:900;font-size:19px;margin-top:10px}
-#status{font-size:12px;color:#b6c9ba;min-height:18px}
-#rotate{display:none;position:fixed;z-index:4;inset:0;background:#101812;color:white;align-items:center;justify-content:center;text-align:center;padding:25px}
-@media (orientation:portrait){#rotate{display:flex}}
-@media (orientation:landscape){#rotate{display:none}}
+#menu{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:#101812e8;padding:20px;text-align:center}
+#card{width:100%;max-width:420px;background:#203326;border:1px solid #ffffff55;border-radius:22px;padding:24px}
+h1{font-size:32px;margin:0 0 12px}
+p{line-height:1.5}
+button{cursor:pointer;border:0;border-radius:14px;padding:15px;font-size:18px;font-weight:bold}
+#play{width:100%;background:#d8f45e;color:#18240d}
+#status{font-size:13px;color:#ffe6a0;overflow-wrap:anywhere}
+#hud{display:none;position:fixed;inset:0;pointer-events:none}
+#top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;font-weight:bold;text-shadow:0 2px 4px black}
+.pill{background:#101820bb;padding:10px;border-radius:12px}
+#stickbase{position:absolute;left:20px;bottom:22px;width:125px;height:125px;border-radius:50%;background:#ffffff44;border:2px solid #ffffff99;pointer-events:auto;touch-action:none}
+#stick{position:absolute;left:35px;top:35px;width:52px;height:52px;border-radius:50%;background:#eafff0cc;border:2px solid white}
+#fire{position:absolute;right:20px;bottom:24px;width:92px;height:92px;border-radius:50%;background:#e85b37;color:white;border:3px solid white;pointer-events:auto}
+#run{position:absolute;right:28px;bottom:130px;padding:12px;background:#203326;color:white;pointer-events:auto}
+#aim{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:26px;text-shadow:0 1px 4px black}
+#rotate{display:none;position:fixed;inset:0;z-index:8;background:#101812;align-items:center;justify-content:center;text-align:center;padding:25px}
+@media(orientation:portrait){#rotate{display:flex}}
+@media(orientation:landscape){#rotate{display:none}}
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
-<div id="rotate">↻<br><br>Поверни телефон горизонтально<br><small>Игра лучше работает в альбомном режиме</small></div>
-<div id="hud">
- <div id="top"><div class="pill">🌲 ЛЕСНАЯ ВОЙНА</div><div class="pill">❤ <span id="health">100</span></div></div>
- <div id="hint">Двигай левый стик · веди пальцем по экрану для обзора</div>
- <div id="crosshair"></div>
- <div id="joystick"><div id="stick"></div></div>
- <button id="run">БЕГ: ВЫКЛ</button>
- <button id="fire">СТРЕЛЯТЬ</button>
+
+<div id="rotate">Поверни телефон горизонтально, чтобы играть.</div>
+
+<div id="menu">
+  <div id="card">
+    <h1>🌲 ЛЕСНАЯ ВОЙНА</h1>
+    <p>Мобильный шутер от первого лица.</p>
+    <p>Левый стик — движение. Правая часть экрана — обзор. Кнопка — стрельба.</p>
+    <p id="status">Игра готова к запуску.</p>
+    <button id="play">НАЧАТЬ ИГРУ</button>
+  </div>
 </div>
-<div id="start"><div id="card"><h1>ЛЕСНАЯ ВОЙНА</h1><p>Мобильный 3D-шутер от первого лица.<br>Поверни телефон горизонтально, нажми «Начать» и разреши полноэкранный режим, если браузер предложит.</p><p id="status">Подготовка леса и оружия…</p><button id="play">НАЧАТЬ ИГРУ</button><p style="font-size:12px">Управление: левый стик — движение, правая часть экрана — обзор, кнопка — выстрел.</p></div></div>
-<script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-const canvas=document.querySelector('#game'), statusEl=document.querySelector('#status');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);
-renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bb8bd);scene.fog=new THREE.Fog(0x9bb8bd,35,150);
-const camera=new THREE.PerspectiveCamera(76,innerWidth/innerHeight,.08,400);
-camera.rotation.order='YXZ';scene.add(camera);
-scene.add(new THREE.HemisphereLight(0xe4f4ff,0x34442a,2));
-const sun=new THREE.DirectionalLight(0xffedc7,2.6);sun.position.set(-35,65,25);scene.add(sun);
-const loader=new GLTFLoader();
-const mat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness});
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mat(0x526e43));ground.rotation.x=-Math.PI/2;ground.position.y=-.04;scene.add(ground);
-// Forest fallback: a walkable clearing with procedural trees and rocks.
-const treeGroup=new THREE.Group();scene.add(treeGroup);
-function tree(x,z,s=1){const g=new THREE.Group();const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18*s,.28*s,2.5*s,7),mat(0x60432d));trunk.position.y=1.25*s;g.add(trunk);
- for(let i=0;i<3;i++){const crown=new THREE.Mesh(new THREE.ConeGeometry((1.25-i*.19)*s,(2.2-i*.12)*s,7),mat([0x315b35,0x3c713e,0x487b42][i]));crown.position.y=(2.2+i*.85)*s;g.add(crown)}g.position.set(x,0,z);treeGroup.add(g)}
-for(let i=0;i<115;i++){const a=Math.random()*Math.PI*2,r=13+Math.random()*85;tree(Math.cos(a)*r,Math.sin(a)*r,.65+Math.random()*.9)}
-for(let i=0;i<40;i++){const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.35+Math.random()*.7,0),mat(0x77796b));rock.position.set((Math.random()-.5)*25,.3,(Math.random()-.5)*25);rock.scale.y=.55;scene.add(rock)}
-// Load the uploaded forest model from the repository root. If it fails, the procedural forest remains.
-let forestLoaded=false;
-loader.load('./landscape_forest__mountains.glb',g=>{g.scene.scale.setScalar(1);g.scene.position.set(0,0,0);scene.add(g.scene);forestLoaded=true;statusEl.textContent='Лес загружен';},undefined,e=>console.warn('Не удалось загрузить модель леса:',e));
-// Weapon model attached to camera; fallback pistol made from simple meshes.
-const weapon=new THREE.Group();camera.add(weapon);weapon.position.set(.32,-.28,-.62);weapon.rotation.set(0,Math.PI,0);
-function makeFallbackGun(){const dark=mat(0x20252a,.45),metal=mat(0x454c50,.35),grip=mat(0x171b1e);const slide=new THREE.Mesh(new THREE.BoxGeometry(.15,.13,.55),metal);slide.position.set(0,.04,-.12);weapon.add(slide);const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.35,10),dark);barrel.rotation.x=Math.PI/2;barrel.position.set(0,.04,-.5);weapon.add(barrel);const handle=new THREE.Mesh(new THREE.BoxGeometry(.12,.26,.15),grip);handle.position.set(0,-.12,.03);handle.rotation.x=-.18;weapon.add(handle);const sight=new THREE.Mesh(new THREE.BoxGeometry(.04,.04,.08),dark);sight.position.set(0,.13,-.16);weapon.add(sight)}
-makeFallbackGun();
-loader.load('./beretta_pmx_pmxs_sportiva_nero.glb',g=>{const model=g.scene;model.scale.setScalar(.22);model.position.set(0,-.10,-.25);model.rotation.y=Math.PI;weapon.add(model);statusEl.textContent='Пистолет загружен';},undefined,e=>console.warn('Не удалось загрузить модель оружия:',e));
-let yaw=0,pitch=0,health=100,started=false,run=false,fireUntil=0,lastShot=0;
-const keys={forward:0,side:0};let moving=false;
-const player={x:0,y:1.65,z:6,vy:0};
-function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7))}
-addEventListener('resize',resize);
-async function enterGame(){started=true;document.querySelector('#start').style.display='none';try{if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();}catch(e){}try{if(screen.orientation&&screen.orientation.lock)await screen.orientation.lock('landscape');}catch(e){}}
-document.querySelector('#play').addEventListener('click',enterGame);
-document.querySelector('#run').addEventListener('click',()=>{run=!run;document.querySelector('#run').textContent='БЕГ: '+(run?'ВКЛ':'ВЫКЛ')});
-// Virtual joystick
-const joy=document.querySelector('#joystick'),stick=document.querySelector('#stick');let joyId=null,joyCenter={x:0,y:0};
-function joyStart(e){e.preventDefault();joyId=e.pointerId;joy.setPointerCapture(joyId);const r=joy.getBoundingClientRect();joyCenter={x:r.left+r.width/2,y:r.top+r.height/2};joyMove(e)}
-function joyMove(e){if(joyId!==e.pointerId)return;let dx=e.clientX-joyCenter.x,dy=e.clientY-joyCenter.y;const max=42,len=Math.hypot(dx,dy)||1;if(len>max){dx=dx/len*max;dy=dy/len*max}stick.style.transform=`translate(${dx}px,${dy}px)`;keys.side=dx/max;keys.forward=-dy/max}
-function joyEnd(e){if(joyId!==e.pointerId)return;joyId=null;keys.side=keys.forward=0;stick.style.transform='translate(0,0)'}
-joy.addEventListener('pointerdown',joyStart);joy.addEventListener('pointermove',joyMove);joy.addEventListener('pointerup',joyEnd);joy.addEventListener('pointercancel',joyEnd);
-// Look with right-side touch or mouse drag
-let lookId=null,lastX=0,lastY=0;
-canvas.addEventListener('pointerdown',e=>{if(e.clientX<innerWidth*.35&&e.pointerType==='touch')return;lookId=e.pointerId;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(lookId)});
-canvas.addEventListener('pointermove',e=>{if(lookId!==e.pointerId||!started)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;yaw-=dx*.0042;pitch=clamp(pitch-dy*.0035,-1.25,1.25)});
-function endLook(e){if(lookId===e.pointerId)lookId=null}canvas.addEventListener('pointerup',endLook);canvas.addEventListener('pointercancel',endLook);
-function shoot(){if(!started)return;const now=performance.now();if(now-lastShot<190)return;lastShot=now;fireUntil=now+115;weapon.position.z=-.52;weapon.position.y=-.25;
- // Tiny muzzle flash at the centre of the view
- const flash=new THREE.Mesh(new THREE.SphereGeometry(.055,8,6),new THREE.MeshBasicMaterial({color:0xffd26a}));flash.position.set(0,-.04,-1.1);camera.add(flash);setTimeout(()=>{camera.remove(flash);flash.geometry.dispose();flash.material.dispose()},55);
- // Raycast hit feedback against visible model meshes
- const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(0,0),camera);const hits=ray.intersectObjects(scene.children,true);if(hits.length&&hits[0].distance<80){const obj=hits[0].object;const old=obj.material;if(old&&old.color){obj.material=old.clone();obj.material.color.set(0xffb64d);setTimeout(()=>{obj.material.dispose();obj.material=old},90)}}
+
+<div id="hud">
+  <div id="top">
+    <div class="pill">🌲 ЛЕСНАЯ ВОЙНА</div>
+    <div class="pill">❤ 100</div>
+  </div>
+  <div id="aim">+</div>
+  <div id="stickbase"><div id="stick"></div></div>
+  <button id="run">БЕГ: ВЫКЛ</button>
+  <button id="fire">СТРЕЛЯТЬ</button>
+</div>
+
+<script>
+const menu=document.getElementById('menu');
+const statusEl=document.getElementById('status');
+const play=document.getElementById('play');
+let gameStarted=false;
+let startGame=null;
+
+play.addEventListener('click',async()=>{
+  statusEl.textContent='Запускаю 3D-движок…';
+  play.disabled=true;
+  try{
+    if(!startGame){
+      const module=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
+      const loaderModule=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
+      startGame=()=>initGame(module,loaderModule);
+    }
+    startGame();
+    gameStarted=true;
+    menu.style.display='none';
+    document.getElementById('hud').style.display='block';
+    try{await document.documentElement.requestFullscreen()}catch(e){}
+    try{await screen.orientation.lock('landscape')}catch(e){}
+  }catch(e){
+    statusEl.textContent='Ошибка запуска: '+(e.message||e)+'. Проверь интернет и обнови страницу.';
+    play.disabled=false;
+  }
+});
+
+function initGame(THREE,GLTF){
+  if(window.forestGameReady)return;
+  window.forestGameReady=true;
+
+  const canvas=document.getElementById('game');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+
+  const scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x9bb8bd);
+  scene.fog=new THREE.Fog(0x9bb8bd,30,150);
+
+  const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,400);
+  camera.rotation.order='YXZ';
+  scene.add(camera);
+
+  scene.add(new THREE.HemisphereLight(0xe4f4ff,0x34442a,2));
+  const sun=new THREE.DirectionalLight(0xffedc7,2.5);
+  sun.position.set(-35,65,25);
+  scene.add(sun);
+
+  const mat=(color)=>new THREE.MeshStandardMaterial({color});
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mat(0x526e43));
+  ground.rotation.x=-Math.PI/2;
+  scene.add(ground);
+
+  // Запасной лес из простых 3D-деревьев.
+  function tree(x,z,s){
+    const g=new THREE.Group();
+    const trunk=new THREE.Mesh(
+      new THREE.CylinderGeometry(.18*s,.25*s,2.4*s,7),
+      mat(0x60432d)
+    );
+    trunk.position.y=1.2*s;
+    g.add(trunk);
+    for(let i=0;i<3;i++){
+      const crown=new THREE.Mesh(
+        new THREE.ConeGeometry((1.2-i*.2)*s,2*s,7),
+        mat([0x315b35,0x3c713e,0x487b42][i])
+      );
+      crown.position.y=(2+i*.8)*s;
+      g.add(crown);
+    }
+    g.position.set(x,0,z);
+    scene.add(g);
+  }
+
+  for(let i=0;i<110;i++){
+    const a=Math.random()*Math.PI*2;
+    const r=12+Math.random()*75;
+    tree(Math.cos(a)*r,Math.sin(a)*r,.7+Math.random()*.7);
+  }
+
+  // Модель карты загружается дополнительно; лес останется и без неё.
+  const loader=new GLTF.GLTFLoader();
+  loader.load('./landscape_forest__mountains.glb',g=>{
+    g.scene.scale.setScalar(1);
+    g.scene.position.set(0,0,0);
+    scene.add(g.scene);
+  },undefined,()=>console.log('Используется запасной лес'));
+
+  // Оружие из простых фигур — появляется даже без файла модели.
+  const weapon=new THREE.Group();
+  camera.add(weapon);
+  weapon.position.set(.32,-.28,-.65);
+
+  const gun=new THREE.Mesh(
+    new THREE.BoxGeometry(.13,.14,.55),
+    mat(0x30363b)
+  );
+  gun.position.set(0,0,-.12);
+  weapon.add(gun);
+
+  const handle=new THREE.Mesh(
+    new THREE.BoxGeometry(.11,.24,.14),
+    mat(0x171b1e)
+  );
+  handle.position.set(0,-.15,.06);
+  weapon.add(handle);
+
+  loader.load('./beretta_pmx_pmxs_sportiva_nero.glb',g=>{
+    const model=g.scene;
+    model.scale.setScalar(.22);
+    model.position.set(0,-.1,-.25);
+    weapon.add(model);
+  },undefined,()=>console.log('Используется запасное оружие'));
+
+  let yaw=0,pitch=0;
+  const player={x:0,y:1.65,z:6};
+  const keys={forward:0,side:0};
+  let running=false,lastShot=0,recoil=0;
+
+  function resize(){
+    camera.aspect=innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight);
+  }
+  addEventListener('resize',resize);
+
+  const base=document.getElementById('stickbase');
+  const stick=document.getElementById('stick');
+  let joyId=null,cx=0,cy=0;
+
+  base.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    joyId=e.pointerId;
+    base.setPointerCapture(joyId);
+    const r=base.getBoundingClientRect();
+    cx=r.left+r.width/2;
+    cy=r.top+r.height/2;
+    moveJoy(e);
+  });
+  function moveJoy(e){
+    if(e.pointerId!==joyId)return;
+    let dx=e.clientX-cx,dy=e.clientY-cy;
+    const max=38,len=Math.hypot(dx,dy)||1;
+    if(len>max){dx=dx/len*max;dy=dy/len*max}
+    stick.style.transform=`translate(${dx}px,${dy}px)`;
+    keys.side=dx/max;
+    keys.forward=-dy/max;
+  }
+  base.addEventListener('pointermove',moveJoy);
+  function endJoy(e){
+    if(e.pointerId!==joyId)return;
+    joyId=null;keys.side=keys.forward=0;
+    stick.style.transform='translate(0,0)';
+  }
+  base.addEventListener('pointerup',endJoy);
+  base.addEventListener('pointercancel',endJoy);
+
+  let lookId=null,lastX=0,lastY=0;
+  canvas.addEventListener('pointerdown',e=>{
+    if(e.clientX<innerWidth*.35)return;
+    lookId=e.pointerId;lastX=e.clientX;lastY=e.clientY;
+    canvas.setPointerCapture(lookId);
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(e.pointerId!==lookId)return;
+    yaw-=(e.clientX-lastX)*.004;
+    pitch=Math.max(-1.2,Math.min(1.2,pitch-(e.clientY-lastY)*.003));
+    lastX=e.clientX;lastY=e.clientY;
+  });
+  function endLook(e){if(e.pointerId===lookId)lookId=null}
+  canvas.addEventListener('pointerup',endLook);
+  canvas.addEventListener('pointercancel',endLook);
+
+  document.getElementById('run').onclick=()=>{
+    running=!running;
+    document.getElementById('run').textContent='БЕГ: '+(running?'ВКЛ':'ВЫКЛ');
+  };
+
+  document.getElementById('fire').addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    const now=performance.now();
+    if(now-lastShot<200)return;
+    lastShot=now;
+    recoil=now+120;
+  });
+
+  let previous=performance.now();
+  function animate(now){
+    requestAnimationFrame(animate);
+    const dt=Math.min((now-previous)/1000,.04);
+    previous=now;
+
+    if(gameStarted){
+      const speed=running?7:4;
+      player.x+= (Math.sin(yaw)*keys.forward+Math.cos(yaw)*keys.side)*speed*dt;
+      player.z+= (-Math.cos(yaw)*keys.forward+Math.sin(yaw)*keys.side)*speed*dt;
+      player.x=Math.max(-90,Math.min(90,player.x));
+      player.z=Math.max(-90,Math.min(90,player.z));
+      camera.position.set(player.x,player.y,player.z);
+      camera.rotation.set(pitch,yaw,0,'YXZ');
+      const kick=now<recoil?.08:0;
+      weapon.position.z=-.65+kick;
+      weapon.position.y=-.28+kick*.4;
+    }
+
+    renderer.render(scene,camera);
+  }
+  camera.position.set(0,1.65,6);
+  requestAnimationFrame(animate);
 }
-document.querySelector('#fire').addEventListener('pointerdown',e=>{e.preventDefault();shoot()});
-addEventListener('keydown',e=>{if(e.code==='KeyW'||e.code==='ArrowUp')keys.forward=1;if(e.code==='KeyS'||e.code==='ArrowDown')keys.forward=-1;if(e.code==='KeyA'||e.code==='ArrowLeft')keys.side=-1;if(e.code==='KeyD'||e.code==='ArrowRight')keys.side=1;if(e.code==='Space')shoot()});
-addEventListener('keyup',e=>{if(['KeyW','ArrowUp','KeyS','ArrowDown'].includes(e.code))keys.forward=0;if(['KeyA','ArrowLeft','KeyD','ArrowRight'].includes(e.code))keys.side=0});
-let prev=performance.now();
-function animate(now){requestAnimationFrame(animate);const dt=Math.min((now-prev)/1000,.04);prev=now;
- if(started){const speed=run?7.2:4.1;const f=keys.forward,s=keys.side;const dx=(Math.sin(yaw)*f+Math.cos(yaw)*s)*speed*dt,dz=(-Math.cos(yaw)*f+Math.sin(yaw)*s)*speed*dt;
- player.x=clamp(player.x+dx,-95,95);player.z=clamp(player.z+dz,-95,95);
- // Simple boundary trees act as a soft limit; camera follows the player.
- camera.position.set(player.x,player.y,player.z);camera.rotation.set(pitch,yaw,0,'YXZ');
- const recoil=now<fireUntil?Math.sin((now-(fireUntil-115))/115*Math.PI):0;weapon.position.x=.32;weapon.position.y=-.28+recoil*.07;weapon.position.z=-.62+recoil*.18;
- document.querySelector('#health').textContent=health;
- }
- renderer.render(scene,camera)}
-camera.position.set(0,1.65,6);requestAnimationFrame(animate);
 </script>
-</body></html>
+</body>
+</html>
